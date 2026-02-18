@@ -1,6 +1,8 @@
 import Fastify from 'fastify';
 import pino from 'pino';
 
+import { startOrderEventsConsumer } from './consumers/orderEvents.js';
+
 const logger = pino({ name: 'notifications-service' });
 
 const app = Fastify({ logger: false });
@@ -13,6 +15,7 @@ const port = Number(process.env.PORT ?? 8084);
 async function main(): Promise<void> {
   await app.listen({ port, host: '0.0.0.0' });
   logger.info({ port }, 'notifications-service listening');
+  await startOrderEventsConsumer();
 }
 
 main().catch((err) => {
