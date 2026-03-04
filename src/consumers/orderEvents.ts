@@ -4,6 +4,7 @@ import pino from 'pino';
 import { sendEmail } from '../channels/email.js';
 import { sendPush } from '../channels/push.js';
 import { sendSms } from '../channels/sms.js';
+import { renderShipmentUpdate } from '../templates/shipment-update.js';
 
 const logger = pino({ name: 'consumer:order-events' });
 
@@ -48,12 +49,13 @@ async function handleMessage({ message }: EachMessagePayload): Promise<void> {
   const tasks: Array<Promise<unknown>> = [];
 
   if (event.customer.email) {
+    const rendered = renderShipmentUpdate(event);
     tasks.push(
       sendEmail({
         to: event.customer.email,
-        subject: `Update on shipment ${event.trackingNumber}`,
-        htmlBody: `<p>Your shipment is now: ${event.eventType}</p>`,
-        textBody: `Your shipment is now: ${event.eventType}`,
+        subject: rendered.subject,
+        htmlBody: rendered.htmlBody,
+        textBody: rendered.textBody,
       }),
     );
   }
