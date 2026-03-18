@@ -1,0 +1,23 @@
+name: CI
+
+on: [push, workflow_dispatch]
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify project manifest
+        run: test -f package.json && test -f tsconfig.json
+      - name: Verify service structure
+        run: |
+          test -f src/index.ts
+          test -f src/channels/email.ts
+          test -f src/channels/sms.ts
+          test -f src/channels/push.ts
+          test -f src/consumers/orderEvents.ts
+          test -f src/templates/shipment-update.ts
+      - name: Verify event topic wiring
+        run: grep -q "orders.shipment-events" src/consumers/orderEvents.ts
+      - name: Lint placeholder
+        run: echo "lint ok"
