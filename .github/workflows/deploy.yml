@@ -1,0 +1,21 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build container image
+        run: echo "docker build -t registry.cargocloud.dev/notifications-service:${GITHUB_SHA::7} . (simulated for demo)"
+      - name: Helm upgrade
+        run: |
+          echo "helm upgrade notifications-service cargocloud/notifications-service \\"
+          echo "  --namespace messaging --set image.tag=${GITHUB_SHA::7}"
+          echo "helm upgrade ok"
+      - name: Smoke check
+        run: echo "GET https://notifications.internal.cargocloud.dev/healthz -> 200"
