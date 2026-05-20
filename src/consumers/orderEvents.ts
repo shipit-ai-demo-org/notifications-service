@@ -31,7 +31,10 @@ const kafka = new Kafka({
   brokers: (process.env.KAFKA_BROKERS ?? 'kafka-0.internal:9092').split(','),
 });
 
-const consumer = kafka.consumer({ groupId: 'notifications-service' });
+const consumer = kafka.consumer({
+  groupId: 'notifications-service',
+  retry: { initialRetryTime: 300, retries: 8, multiplier: 2, maxRetryTime: 30_000 },
+});
 
 export async function startOrderEventsConsumer(): Promise<void> {
   await consumer.connect();
@@ -43,7 +46,13 @@ export async function startOrderEventsConsumer(): Promise<void> {
 async function handleMessage({ message }: EachMessagePayload): Promise<void> {
   if (!message.value) return;
 
-  const event = JSON.parse(message.value.toString()) as ShipmentEventMessage;
+  let event: ShipmentEventMessage;
+  try {
+    event = JSON.parse(message.value.toString()) as ShipmentEventMessage;
+  } catch (err) {
+    logger.error({ err }, 'skipping malformed event payload');
+    return;
+  }
   logger.info({ eventType: event.eventType, shipmentId: event.shipmentId }, 'received event');
 
   const tasks: Array<Promise<unknown>> = [];
